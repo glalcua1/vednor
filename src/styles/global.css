@@ -349,7 +349,7 @@ abbr[title] {
   gap: 16px;
   padding: 20px;
   background:
-    url('/WaveLR@2x.png') center/cover no-repeat,
+    url('/WaveLR@2x.png?v=1') center/cover no-repeat,
     linear-gradient(135deg, #f6f9fe 0%, #eef5ff 100%);
 }
 .login-card {

@@ -36,7 +36,7 @@ function Login() {
     <div className="login-page">
       <div className="login-card">
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 18, marginBottom: 32 }}>
-          <img src="/Vivid-Lavender.png" alt="Vendor Management" style={{ height: 24 }} />
+          <img src="/Vivid-Lavender.png?v=1" alt="Vendor Management" style={{ height: 24 }} />
           <div className="login-welcome"><span className="welcome-big">Welcome to</span> <span className="welcome-medium">Vendor Management</span></div>
         </div>
         <form onSubmit={doLogin} className="grid cols-1">
