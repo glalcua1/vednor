@@ -58,7 +58,7 @@ function PRs() {
       vendor: 'Apple',
       category: 'Hardware' as const,
       unitCost: 1299,
-      imageUrl: 'https://www.apple.com/v/imac/o/images/overview/hero__f5phw1ivc0i2_large_2x.jpg'
+      imageUrl: '/imac-blue-selection-hero-202410.jpeg?v=1'
     },
     {
       id: 'imac-24-16gb',
@@ -66,7 +66,7 @@ function PRs() {
       vendor: 'Apple',
       category: 'Hardware' as const,
       unitCost: 1699,
-      imageUrl: 'https://www.apple.com/v/imac/o/images/overview/performance_hero__c36w9m0y1t8i_large_2x.jpg'
+      imageUrl: '/imac-blue-selection-hero-202410.jpeg?v=1'
     },
     {
       id: 'applecare-mac',
@@ -74,7 +74,7 @@ function PRs() {
       vendor: 'Apple',
       category: 'Services' as const,
       unitCost: 199,
-      imageUrl: 'https://www.apple.com/v/applecare-plus/o/images/overview/hero_applecare__e9a8h3u7w26y_large_2x.jpg'
+      imageUrl: '/imac-blue-selection-hero-202410.jpeg?v=1'
     },
     {
       id: 'display-27',
@@ -82,7 +82,7 @@ function PRs() {
       vendor: 'Apple',
       category: 'Hardware' as const,
       unitCost: 599,
-      imageUrl: 'https://www.apple.com/v/imac/o/images/overview/display__f0l8m5rv9e2e_large_2x.jpg'
+      imageUrl: '/imac-blue-selection-hero-202410.jpeg?v=1'
     }
   ]
   const formatShortDate = (iso?: string) => {
@@ -582,8 +582,8 @@ function PRs() {
               <div key={p.id} className="card" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 12, overflow: 'hidden', background: '#f6f9fe', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {(() => {
-                    const fallbackSrc = '/Vivid-Lavender.png'
-                    const chosenSrc = isEmployee ? '/imac-blue-selection-hero-202410.jpeg' : (p.imageUrl || '')
+                    const fallbackSrc = '/placeholder.png'
+                    const chosenSrc = p.imageUrl || fallbackSrc
                     const showFallback = brokenImages[p.id] || !chosenSrc
                     if (showFallback) {
                       return <img src={fallbackSrc} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: .9 }} />
