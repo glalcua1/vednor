@@ -348,7 +348,9 @@ abbr[title] {
   justify-content: center;
   gap: 16px;
   padding: 20px;
-  background: linear-gradient(135deg, #f6f9fe 0%, #eef5ff 100%);
+  background:
+    url('/login-bg.svg') center/cover no-repeat,
+    linear-gradient(135deg, #f6f9fe 0%, #eef5ff 100%);
 }
 .login-card {
   width: 450px;
