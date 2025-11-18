@@ -5,11 +5,11 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { IconTrash, IconChat } from '../components/icons'
 import Drawer from '../components/Drawer'
-import { PurchaseOrder } from '../state/types'
+import { PurchaseOrder, Vendor, RFQ, Quote, PurchaseRequisition } from '../state/types'
 import { showToast } from '../utils/toast'
 
 function POs({ query = '' }: { query?: string }) {
-  const { state, updatePO, addAsset, deletePO, updateVendor, updatePR, addInvoice } = useAppState() as any
+  const { state, updatePO, addAsset, deletePO, updateVendor, updatePR, addInvoice } = useAppState()
   const formatShortDate = (iso?: string) => {
     if (!iso) return '-'
     const d = new Date(iso)
@@ -118,7 +118,7 @@ function POs({ query = '' }: { query?: string }) {
         <div className="row" style={{ padding: '8px 12px' }}>
           <select className="select inline" value={vendorFilterId} onChange={e => setVendorFilterId(e.target.value)} style={{ maxWidth: 260 }}>
             <option value="All">All Vendors</option>
-            {state.vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+            {state.vendors.map((v: Vendor) => <option key={v.id} value={v.id}>{v.name}</option>)}
           </select>
           <div className="spacer" />
           <input className="input" style={{ height: 36, maxWidth: 320 }} placeholder="Search POs..." value={localQuery} onChange={e => setLocalQuery(e.target.value)} />
@@ -140,18 +140,18 @@ function POs({ query = '' }: { query?: string }) {
           </thead>
           <tbody>
             {state.pos
-              .filter(p => {
+              .filter((p: PurchaseOrder) => {
                 const vendorOk = vendorFilterId === 'All' ? true : p.vendorId === vendorFilterId
                 if (!vendorOk) return false
                 if (!effectiveQuery) return true
-                const vendor = state.vendors.find(v => v.id === p.vendorId)
+                const vendor = state.vendors.find((v: Vendor) => v.id === p.vendorId)
                 const hay = [`PO-${p.id.slice(0,6)}`, vendor?.name ?? '', p.status, String(p.total), p.expectedDeliveryDate ?? ''].join(' ').toLowerCase()
                 return hay.includes(effectiveQuery)
               })
-              .sort((a, b) => {
+              .sort((a: PurchaseOrder, b: PurchaseOrder) => {
                 const dir = sortDir === 'asc' ? 1 : -1
-                const vendorA = state.vendors.find(v => v.id === a.vendorId)?.name ?? ''
-                const vendorB = state.vendors.find(v => v.id === b.vendorId)?.name ?? ''
+                const vendorA = state.vendors.find((v: Vendor) => v.id === a.vendorId)?.name ?? ''
+                const vendorB = state.vendors.find((v: Vendor) => v.id === b.vendorId)?.name ?? ''
                 switch (sortKey) {
                   case 'date': return ((new Date(a.createdAt).getTime()) - (new Date(b.createdAt).getTime())) * dir
                   case 'id': return a.id.localeCompare(b.id) * dir
@@ -164,13 +164,13 @@ function POs({ query = '' }: { query?: string }) {
                   default: return 0
                 }
               })
-              .map(p => {
-              const vendor = state.vendors.find(v => v.id === p.vendorId)
+              .map((p: PurchaseOrder) => {
+              const vendor = state.vendors.find((v: Vendor) => v.id === p.vendorId)
               const expected = (() => {
                 if (p.expectedDeliveryDate) return p.expectedDeliveryDate
                 if (p.fromRFQId) {
-                  const rfq = state.rfqs.find(r => r.id === p.fromRFQId)
-                  const q = rfq ? rfq.quotes.find(q => q.id === rfq.selectedQuoteId) : undefined
+                  const rfq = state.rfqs.find((r: RFQ) => r.id === p.fromRFQId)
+                  const q = rfq ? rfq.quotes.find((q: Quote) => q.id === rfq.selectedQuoteId) : undefined
                   if (rfq && q) return addBusinessDays(rfq.createdAt, q.deliveryDays)
                 }
                 return '-'
@@ -189,7 +189,7 @@ function POs({ query = '' }: { query?: string }) {
                   >
                     {p.fromPRId ? `PR-${p.fromPRId.slice(0,6)}` : '-'}
                     {p.fromPRId && hoverPR === p.fromPRId && (() => {
-                      const pr = state.prs.find(pr => pr.id === p.fromPRId)
+                      const pr = state.prs.find((pr: PurchaseRequisition) => pr.id === p.fromPRId)
                       const currency = pr?.currency ?? 'USD'
                       const requester = pr ? state.users.find(u => u.id === pr.requestedByUserId)?.name ?? pr.requestedByUserId : '-'
                       return (
@@ -199,7 +199,7 @@ function POs({ query = '' }: { query?: string }) {
                           <div style={{ fontSize: 13, marginBottom: 8 }}>Department: {pr?.department ?? '-'}</div>
                           <div style={{ fontSize: 13, marginBottom: 6 }}>Items:</div>
                           <div style={{ maxHeight: 140, overflow: 'auto' }}>
-                            {(pr?.items ?? []).map(i => (
+                            {(pr?.items ?? []).map((i) => (
                               <div key={i.id} style={{ fontSize: 13, display: 'flex', gap: 8, marginBottom: 4 }}>
                                 <div style={{ flex: 1, opacity: .9 }}>{i.description}</div>
                                 <div style={{ whiteSpace: 'nowrap' }}>{i.quantity} × {currency} {i.unitCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
@@ -217,7 +217,7 @@ function POs({ query = '' }: { query?: string }) {
                   <td>{typeof vendor?.discount === 'number' ? `${vendor.discount}%` : '-'}</td>
                   <td>
                     {(() => {
-                      const currency = (state.prs.find(pr => pr.id === p.fromPRId)?.currency ?? 'USD')
+                      const currency = (state.prs.find((pr: PurchaseRequisition) => pr.id === p.fromPRId)?.currency ?? 'USD')
                       return `${currency} ${p.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                     })()}
                   </td>
@@ -230,7 +230,7 @@ function POs({ query = '' }: { query?: string }) {
                     {!p.vendorAccepted && <button className="btn small" onClick={() => updatePO({ ...p, vendorAccepted: true, terms: terms || 'Net 30', expectedDeliveryDate: expected || p.expectedDeliveryDate })}>Vendor Accept</button>}
                     {!p.deliveryConfirmed && <button className="btn primary small" onClick={() => {
                       updatePO({ ...p, deliveryConfirmed: true, status: 'Delivered' })
-                      const pr = state.prs.find(pr => pr.id === p.fromPRId)
+                      const pr = state.prs.find((pr: PurchaseRequisition) => pr.id === p.fromPRId)
                       if (pr) {
                         // Keep PR reflecting the latest lifecycle; using Approved as a terminal internal status
                         updatePR({ ...pr, status: 'Approved' })
@@ -245,7 +245,7 @@ function POs({ query = '' }: { query?: string }) {
                     }}>Confirm Delivery (GRN)</button>}
                     {p.deliveryConfirmed && <button className="btn ghost small" onClick={() => {
                       const name = p.items[0]?.description ?? `PO-${p.id.slice(0,6)} Item`
-                      const pr = p.fromPRId ? state.prs.find(pr => pr.id === p.fromPRId) : undefined
+                      const pr = p.fromPRId ? state.prs.find((pr: PurchaseRequisition) => pr.id === p.fromPRId) : undefined
                       const dept = pr?.department ?? undefined
                       const asset = addAsset({
                         vendorId: p.vendorId,

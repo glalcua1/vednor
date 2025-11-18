@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useReducer } from 'react'
 import { v4 as uuid } from 'uuid'
-import { AppState, Role, User, Vendor, PurchaseRequisition, RFQ, PurchaseOrder, Invoice, Asset, Settings } from './types'
+import { AppState, Role, User, Vendor, PurchaseRequisition, RFQ, PurchaseOrder, Invoice, Asset, Settings, Quote } from './types'
 import { loadState, saveState } from '../utils/storage'
 
 type Action =
@@ -123,7 +123,7 @@ function initialSeed(): AppState {
       invitedVendorIds,
       quotes,
       selectedQuoteId: quotes.length ? quotes[0].id : undefined,
-      status: quotes.length ? 'Awarded' : 'Open',
+      status: quotes.length ? 'Awarded' as RFQ['status'] : 'Open',
       createdAt: new Date().toISOString()
     }
   })
@@ -140,7 +140,7 @@ function initialSeed(): AppState {
         vendorId: sel.vendorId,
         items: pr.items.map(i => ({ id: i.id, description: i.description, quantity: i.quantity, unitCost: i.unitCost })),
         total: money(pr.items.reduce((s, i) => s + i.quantity * i.unitCost, 0)),
-        status: pick(['Open','Delivered','Closed']),
+        status: pick(['Open','Delivered','Closed']) as PurchaseOrder['status'],
         deliveryConfirmed: Math.random() > 0.5,
         vendorAccepted: true,
         terms: pick(['Net 15','Net 30']),

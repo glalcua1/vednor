@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react'
 import { v4 as uuid } from 'uuid'
 import { useAppState } from '../state/AppStateContext'
-import { RFQ, Quote } from '../state/types'
+import { RFQ, Quote, Vendor, PurchaseRequisition } from '../state/types'
 import Acronym from '../components/Acronym'
 import Drawer from '../components/Drawer'
 import { IconTrash, IconChat } from '../components/icons'
 import { showToast } from '../utils/toast'
 
 function RFQs({ query = '', setQuery }: { query?: string, setQuery?: (v: string) => void }) {
-  const { state, updateRFQ, addRFQ, addPO, deleteRFQ, updatePR } = useAppState() as any
+  const { state, updateRFQ, addRFQ, addPO, deleteRFQ, updatePR } = useAppState()
   const [sortKey, setSortKey] = useState<'id' | 'from' | 'date' | 'status' | 'invited' | 'quotes' | 'vendor'>('date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const formatShortDate = (iso?: string) => {
@@ -65,14 +65,14 @@ function RFQs({ query = '', setQuery }: { query?: string, setQuery?: (v: string)
       return awarded ?? r.invitedVendorIds[0] ?? ''
     })()
     setChatVendorId(defaultVendor)
-    const vendor = state.vendors.find(v => v.id === defaultVendor)
+    const vendor = state.vendors.find((v: Vendor) => v.id === defaultVendor)
     const intro = `Hello ${vendor?.contactPerson ?? 'Team'}, thanks for your interest. We’d like to discuss the quote.`
     setMessages([{ from: 'vendor', text: intro, ts: new Date().toISOString() }])
     setChatOpen(true)
   }
   // Default quote currency to PR currency when opening Manage RFQ
   if (manageRFQ) {
-    const pr = state.prs.find(p => p.id === manageRFQ.fromPRId)
+    const pr = state.prs.find((p: PurchaseRequisition) => p.id === manageRFQ.fromPRId)
     if (pr && quoteCurrency !== (pr.currency ?? 'USD') && (quoteVendorId === '' && quotePrice === 0 && quoteDays === 7 && quoteTerms === '')) {
       setQuoteCurrency(pr.currency ?? 'USD')
     }
@@ -85,9 +85,9 @@ function RFQs({ query = '', setQuery }: { query?: string, setQuery?: (v: string)
 
   function createRFQ() {
     if (!fromPR) return alert('Select a PR')
-    const pr = state.prs.find(p => p.id === fromPR)
+    const pr = state.prs.find((p: PurchaseRequisition) => p.id === fromPR)
     if (!pr) return alert('Invalid PR')
-    const inviteIds = invitedVendors.length ? invitedVendors : state.vendors.map(v => v.id)
+    const inviteIds = invitedVendors.length ? invitedVendors : state.vendors.map((v: Vendor) => v.id)
     addRFQ({ fromPRId: pr.id, invitedVendorIds: inviteIds })
     // Keep PR in sync when RFQ is created from RFQ tab
     updatePR({ ...pr, status: 'Converted to RFQ' })
@@ -110,15 +110,15 @@ function RFQs({ query = '', setQuery }: { query?: string, setQuery?: (v: string)
   }
 
   function award(rfq: RFQ, quoteId: string) {
-    const quote = rfq.quotes.find(q => q.id === quoteId)
+    const quote = rfq.quotes.find((q: Quote) => q.id === quoteId)
     if (!quote) return
-    const awardedRFQ = { ...rfq, selectedQuoteId: quoteId, status: 'Awarded' }
+    const awardedRFQ: RFQ = { ...rfq, selectedQuoteId: quoteId, status: 'Awarded' }
     updateRFQ(awardedRFQ)
     setManageRFQ(awardedRFQ)
-    const pr = state.prs.find(p => p.id === rfq.fromPRId)
+    const pr = state.prs.find((p: PurchaseRequisition) => p.id === rfq.fromPRId)
     const expectedDate = addBusinessDays(new Date().toISOString(), quote.deliveryDays)
     const baseTotal = pr ? pr.items.reduce((s, i) => s + i.quantity * i.unitCost, 0) : quote.price
-    const vendor = state.vendors.find(v => v.id === quote.vendorId)
+    const vendor = state.vendors.find((v: Vendor) => v.id === quote.vendorId)
     const disc = typeof vendor?.discount === 'number' ? vendor.discount : 0
     const netTotal = baseTotal * (1 - (disc / 100))
     addPO({
@@ -152,11 +152,11 @@ function RFQs({ query = '', setQuery }: { query?: string, setQuery?: (v: string)
       <div className="table-block">
         {(() => {
           const visibleRFQs = state.rfqs
-            .filter((r) => {
+            .filter((r: RFQ) => {
               if (!query) return true
               const v = (() => {
-                const q = r.quotes.find(q => q.id === r.selectedQuoteId)
-                const vendor = q ? state.vendors.find(v => v.id === q.vendorId) : undefined
+                const q = r.quotes.find((q: Quote) => q.id === r.selectedQuoteId)
+                const vendor = q ? state.vendors.find((v: Vendor) => v.id === q.vendorId) : undefined
                 return vendor?.name ?? ''
               })()
               const hay = [`RFQ-${r.id.slice(0,6)}`, `PR-${r.fromPRId.slice(0,6)}`, formatShortDate(r.createdAt), r.status, String(r.invitedVendorIds.length), String(r.quotes.length), v].join(' ').toLowerCase()
@@ -198,26 +198,26 @@ function RFQs({ query = '', setQuery }: { query?: string, setQuery?: (v: string)
           </thead>
           <tbody>
             {state.rfqs
-              .filter(r => {
+              .filter((r: RFQ) => {
                 if (!query) return true
                 const v = (() => {
-                  const q = r.quotes.find(q => q.id === r.selectedQuoteId)
-                  const vendor = q ? state.vendors.find(v => v.id === q.vendorId) : undefined
+                  const q = r.quotes.find((q: Quote) => q.id === r.selectedQuoteId)
+                  const vendor = q ? state.vendors.find((v: Vendor) => v.id === q.vendorId) : undefined
                   return vendor?.name ?? ''
                 })()
                 const hay = [`RFQ-${r.id.slice(0,6)}`, `PR-${r.fromPRId.slice(0,6)}`, formatShortDate(r.createdAt), r.status, String(r.invitedVendorIds.length), String(r.quotes.length), v].join(' ').toLowerCase()
                 return hay.includes(query.toLowerCase())
               })
-              .sort((a, b) => {
+              .sort((a: RFQ, b: RFQ) => {
                 const dir = sortDir === 'asc' ? 1 : -1
                 const vendorA = (() => {
-                  const q = a.quotes.find(q => q.id === a.selectedQuoteId)
-                  const v = q ? state.vendors.find(v => v.id === q.vendorId) : undefined
+                  const q = a.quotes.find((q: Quote) => q.id === a.selectedQuoteId)
+                  const v = q ? state.vendors.find((v: Vendor) => v.id === q.vendorId) : undefined
                   return v?.name ?? ''
                 })()
                 const vendorB = (() => {
-                  const q = b.quotes.find(q => q.id === b.selectedQuoteId)
-                  const v = q ? state.vendors.find(v => v.id === q.vendorId) : undefined
+                  const q = b.quotes.find((q: Quote) => q.id === b.selectedQuoteId)
+                  const v = q ? state.vendors.find((v: Vendor) => v.id === q.vendorId) : undefined
                   return v?.name ?? ''
                 })()
                 switch (sortKey) {
@@ -231,7 +231,7 @@ function RFQs({ query = '', setQuery }: { query?: string, setQuery?: (v: string)
                   default: return 0
                 }
               })
-              .map(r => (
+              .map((r: RFQ) => (
               <tr key={r.id} className={(() => {
                 const ms = Date.now() - new Date(r.createdAt).getTime()
                 return ms < 5000 ? 'row-flash' : ''
@@ -244,7 +244,7 @@ function RFQs({ query = '', setQuery }: { query?: string, setQuery?: (v: string)
                 >
                   PR-{r.fromPRId.slice(0,6)}
                   {hoverRFQId === r.id && (() => {
-                    const pr = state.prs.find(p => p.id === r.fromPRId)
+                    const pr = state.prs.find((p: PurchaseRequisition) => p.id === r.fromPRId)
                     const requester = pr ? state.users.find(u => u.id === pr.requestedByUserId)?.name ?? pr.requestedByUserId : '-'
                     const currency = pr?.currency ?? 'USD'
                     return (
@@ -254,7 +254,7 @@ function RFQs({ query = '', setQuery }: { query?: string, setQuery?: (v: string)
                         <div style={{ fontSize: 13, marginBottom: 8 }}>Department: {pr?.department ?? '-'}</div>
                         <div style={{ fontSize: 13, marginBottom: 6 }}>Items:</div>
                         <div style={{ maxHeight: 140, overflow: 'auto' }}>
-                          {(pr?.items ?? []).map(i => (
+                          {(pr?.items ?? []).map((i) => (
                             <div key={i.id} style={{ fontSize: 13, display: 'flex', gap: 8, marginBottom: 4 }}>
                               <div style={{ flex: 1, opacity: .9 }}>{i.description}</div>
                               <div style={{ whiteSpace: 'nowrap' }}>{i.quantity} × {currency} {i.unitCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
@@ -274,17 +274,17 @@ function RFQs({ query = '', setQuery }: { query?: string, setQuery?: (v: string)
                 <td>{r.invitedVendorIds.length}</td>
                 <td>{r.quotes.length}</td>
                 <td>{(() => {
-                  const q = r.quotes.find(q => q.id === r.selectedQuoteId)
-                  const v = q ? state.vendors.find(v => v.id === q.vendorId) : undefined
+                  const q = r.quotes.find((q: Quote) => q.id === r.selectedQuoteId)
+                  const v = q ? state.vendors.find((v: Vendor) => v.id === q.vendorId) : undefined
                   return v ? v.name : '-'
                 })()}</td>
                 <td>{(() => {
-                  const q = r.quotes.find(q => q.id === r.selectedQuoteId)
-                  const v = q ? state.vendors.find(v => v.id === q.vendorId) : undefined
+                  const q = r.quotes.find((q: Quote) => q.id === r.selectedQuoteId)
+                  const v = q ? state.vendors.find((v: Vendor) => v.id === q.vendorId) : undefined
                   return typeof v?.discount === 'number' ? `${v.discount}%` : '-'
                 })()}</td>
                 <td>{(() => {
-                  const q = r.quotes.find(q => q.id === r.selectedQuoteId)
+                  const q = r.quotes.find((q: Quote) => q.id === r.selectedQuoteId)
                   if (!q) return '-'
                   const base = r.createdAt ?? new Date().toISOString()
                   return formatShortDate(addBusinessDays(base, q.deliveryDays))

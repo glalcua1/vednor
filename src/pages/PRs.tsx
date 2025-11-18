@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { v4 as uuid } from 'uuid'
 import { useAppState } from '../state/AppStateContext'
-import { PRItem, PurchaseRequisition } from '../state/types'
+import { PRItem, PurchaseRequisition, PurchaseOrder, RFQ, Vendor } from '../state/types'
 import Acronym from '../components/Acronym'
 import Drawer from '../components/Drawer'
 import DepartmentSelect from '../components/DepartmentSelect'
@@ -14,7 +14,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { showToast } from '../utils/toast'
 
 function PRs() {
-  const { state, addPR, updatePR, addRFQ, addPO, deletePR } = useAppState() as any
+  const { state, addPR, updatePR, addRFQ, addPO, deletePR } = useAppState()
   const isEmployee = state.currentUser.role === 'Requestor'
   const isReviewer = state.currentUser.role === 'Procurement' || state.currentUser.role === 'Finance'
   const [dept, setDept] = useState('Engineering')
@@ -128,14 +128,14 @@ function PRs() {
     })
   const prStatusCounts = (() => {
     const m = new Map<string, number>()
-    visiblePRs.forEach(p => m.set(p.status, (m.get(p.status) ?? 0) + 1))
+    visiblePRs.forEach((p: PurchaseRequisition) => m.set(p.status, (m.get(p.status) ?? 0) + 1))
     return m
   })()
   function computePRStatus(pr: PurchaseRequisition): string {
-    const po = state.pos.find(po => po.fromPRId === pr.id)
+    const po = state.pos.find((po: PurchaseOrder) => po.fromPRId === pr.id)
     if (po?.deliveryConfirmed) return 'Delivered'
     if (po) return 'Converted to PO'
-    const rfq = state.rfqs.find(r => r.fromPRId === pr.id)
+    const rfq = state.rfqs.find((r: RFQ) => r.fromPRId === pr.id)
     if (rfq?.status === 'Awarded') return 'RFQ Awarded'
     if (rfq) return 'Converted to RFQ'
     return pr.status

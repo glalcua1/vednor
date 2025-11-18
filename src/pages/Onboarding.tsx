@@ -1,10 +1,19 @@
 import { useState } from 'react'
 import { useAppState } from '../state/AppStateContext'
+import { Vendor } from '../state/types'
 
 function Onboarding() {
   const { addVendor } = useAppState()
   const [step, setStep] = useState(1)
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    name: string
+    category: Vendor['category']
+    contactPerson: string
+    email: string
+    bank: string
+    taxId: string
+    documents: string[]
+  }>({
     name: '',
     category: 'Software',
     contactPerson: '',
@@ -17,7 +26,7 @@ function Onboarding() {
   function next() { setStep(s => Math.min(3, s + 1)) }
   function prev() { setStep(s => Math.max(1, s - 1)) }
   function submit() {
-    addVendor({ ...form, documents: form.documents, status: 'Pending Approval' as any })
+    addVendor({ ...form, documents: form.documents, status: 'Pending Approval' })
     setStep(1)
     setForm({ name: '', category: 'Software', contactPerson: '', email: '', bank: '', taxId: '', documents: [] })
     alert('Vendor submitted for approval.')
@@ -41,7 +50,7 @@ function Onboarding() {
             </div>
             <div className="field">
               <label>Category</label>
-              <select className="select" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
+              <select className="select" value={form.category} onChange={e => setForm({ ...form, category: e.target.value as Vendor['category'] })}>
                 <option>Software</option>
                 <option>Hardware</option>
                 <option>Office Supplies</option>
