@@ -38,6 +38,7 @@ function initialSeed(): AppState {
   const now = Date.now()
   const categories: Vendor['category'][] = ['Software','Hardware','Services','Office Supplies','Other']
   const departments = ['HR','Finance','Product','UXD','Engineering','Admin','Security']
+  const settingsDepartments = departments.map(name => ({ id: uuid(), name, hod: pick(['Alex Morgan','Priya Singh','Rohan Mehta','Jia Chen']) }))
   function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)] }
   function money(n: number) { return Math.round(n * 100) / 100 }
   function dateIn(days: number) { return new Date(now + days * 86400000).toISOString().slice(0,10) }
@@ -210,10 +211,7 @@ function initialSeed(): AppState {
     assets,
     settings: {
       banks: [],
-      departments: [
-        { id: uuid(), name: 'Engineering', hod: 'Jia Chen', budgetCode: 'ENG-2025-TOOLS' },
-        { id: uuid(), name: 'Finance', hod: 'Rohan Mehta', budgetCode: 'FIN-2025-OPS' }
-      ],
+      departments: settingsDepartments,
       workflow: { makerCheckerEnabled: true }
     },
     uiCollapsed: false,
@@ -310,6 +308,25 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     saveState(state)
   }, [state])
+
+  // Lightweight migration: ensure default departments are present in settings for older saved states
+  useEffect(() => {
+    const defaultNames = ['HR','Finance','Product','UXD','Engineering','Admin','Security']
+    const existing = (state.settings?.departments ?? []).map(d => d.name)
+    const missing = defaultNames.filter(n => !existing.includes(n))
+    if (missing.length) {
+      const toAdd = missing.map(name => ({ id: uuid(), name, hod: 'TBD' }))
+      dispatch({
+        type: 'UPDATE_SETTINGS',
+        settings: {
+          ...(state.settings ?? { banks: [], departments: [], workflow: { makerCheckerEnabled: true } }),
+          departments: [ ...(state.settings?.departments ?? []), ...toAdd ]
+        }
+      })
+    }
+  // Only run once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const api = useMemo(() => ({
     state,
