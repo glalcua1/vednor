@@ -38,7 +38,24 @@ function initialSeed(): AppState {
   const now = Date.now()
   const categories: Vendor['category'][] = ['Software','Hardware','Services','Office Supplies','Other']
   const departments = ['HR','Finance','Product','UXD','Engineering','Admin','Security']
-  const settingsDepartments = departments.map(name => ({ id: uuid(), name, hod: pick(['Alex Morgan','Priya Singh','Rohan Mehta','Jia Chen']) }))
+  function defaultBudgetForDepartment(name: string): string {
+    switch (name) {
+      case 'Engineering': return 'ENG-2025-TOOLS'
+      case 'Finance': return 'FIN-2025-OPS'
+      case 'HR': return 'HR-2025-HIRING'
+      case 'UXD': return 'UXD-2025-DESIGN'
+      case 'Product': return 'PROD-2025-ROADMAP'
+      case 'Admin': return 'ADMIN-2025-OFFICE'
+      case 'Security': return 'SEC-2025-COMPLIANCE'
+      default: return `${name.toUpperCase()}-2025-GEN`
+    }
+  }
+  const settingsDepartments = departments.map(name => ({
+    id: uuid(),
+    name,
+    hod: pick(['Alex Morgan','Priya Singh','Rohan Mehta','Jia Chen']),
+    budgetCode: defaultBudgetForDepartment(name)
+  }))
   function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)] }
   function money(n: number) { return Math.round(n * 100) / 100 }
   function dateIn(days: number) { return new Date(now + days * 86400000).toISOString().slice(0,10) }
@@ -217,7 +234,31 @@ function initialSeed(): AppState {
     uiCollapsed: false,
     isAuthenticated: true
   }
-  return loadState(seed)
+  // Sanitize any previously saved state to prevent blank pages from corrupted/incomplete data
+  const loaded = loadState<AppState>(seed) as any
+  const safe: AppState = {
+    ...seed,
+    ...loaded,
+    users: Array.isArray(loaded?.users) ? loaded.users : seed.users,
+    vendors: Array.isArray(loaded?.vendors) ? loaded.vendors : seed.vendors,
+    prs: Array.isArray(loaded?.prs) ? loaded.prs : seed.prs,
+    rfqs: Array.isArray(loaded?.rfqs) ? loaded.rfqs : seed.rfqs,
+    pos: Array.isArray(loaded?.pos) ? loaded.pos : seed.pos,
+    invoices: Array.isArray(loaded?.invoices) ? loaded.invoices : seed.invoices,
+    assets: Array.isArray(loaded?.assets) ? loaded.assets : seed.assets,
+    settings: {
+      ...seed.settings,
+      ...(loaded?.settings ?? {}),
+      departments: Array.isArray(loaded?.settings?.departments) ? loaded.settings.departments : seed.settings.departments,
+      banks: Array.isArray(loaded?.settings?.banks) ? loaded.settings.banks : seed.settings.banks,
+      workflow: {
+        ...seed.settings.workflow,
+        ...(loaded?.settings?.workflow ?? {})
+      }
+    },
+    isAuthenticated: typeof loaded?.isAuthenticated === 'boolean' ? loaded.isAuthenticated : true
+  }
+  return safe
 }
 
 function reducer(state: AppState, action: Action): AppState {
@@ -321,6 +362,21 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         settings: {
           ...(state.settings ?? { banks: [], departments: [], workflow: { makerCheckerEnabled: true } }),
           departments: [ ...(state.settings?.departments ?? []), ...toAdd ]
+        }
+      })
+    }
+    // Ensure each department has a budgetCode
+    const needBudget = (state.settings?.departments ?? []).some(d => !d.budgetCode)
+    if (needBudget) {
+      const updated = (state.settings?.departments ?? []).map(d => ({
+        ...d,
+        budgetCode: d.budgetCode ?? defaultBudgetForDepartment(d.name)
+      }))
+      dispatch({
+        type: 'UPDATE_SETTINGS',
+        settings: {
+          ...(state.settings ?? { banks: [], departments: [], workflow: { makerCheckerEnabled: true } }),
+          departments: updated
         }
       })
     }
