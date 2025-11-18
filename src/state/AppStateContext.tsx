@@ -154,7 +154,7 @@ function initialSeed(): AppState {
       vendorId: pick(vendors).id,
       items: pr.items.map(i => ({ id: i.id, description: i.description, quantity: i.quantity, unitCost: i.unitCost })),
       total: money(pr.items.reduce((s, i) => s + i.quantity * i.unitCost, 0)),
-      status: 'Open',
+      status: 'Open' as PurchaseOrder['status'],
       deliveryConfirmed: false,
       vendorAccepted: false,
       terms: 'Net 30',
